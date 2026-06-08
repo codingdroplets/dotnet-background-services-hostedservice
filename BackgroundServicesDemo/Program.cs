@@ -43,7 +43,11 @@ builder.Services.AddSwaggerGen(options =>
 // 3. Application Services
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Singleton store that holds heartbeat data so it survives the per-tick DI scope.
+builder.Services.AddSingleton<HeartbeatStore>();
+
 // Scoped: one instance per request / per DI scope (consumed inside hosted service scopes too).
+// State is delegated to the singleton HeartbeatStore above.
 builder.Services.AddScoped<IHealthMetricsService, HealthMetricsService>();
 
 // Singleton channel — shared between the HTTP layer (producers) and the background processor (consumer).
@@ -53,7 +57,9 @@ builder.Services.AddSingleton<JobQueue>();
 // 4. Hosted Services (Background Services)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Pattern 1 — Timed heartbeat every 30 seconds, uses scoped DI service.
+// Pattern 1 — Timed heartbeat (default every 30 seconds), uses scoped DI service.
+// Bind the interval from the "Heartbeat" configuration section (falls back to 30s).
+builder.Services.Configure<HeartbeatOptions>(builder.Configuration.GetSection("Heartbeat"));
 builder.Services.AddHostedService<TimedHeartbeatService>();
 
 // Pattern 2 — Queued channel processor.

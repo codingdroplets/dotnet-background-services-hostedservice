@@ -56,7 +56,7 @@ Prefer a one-time tip? [Buy us a coffee ☕](https://buymeacoffee.com/codingdrop
 │  └──────────────────┘   └──────────────────────────────────────────┘   │
 │                                                                         │
 │  DI Lifetimes:                                                          │
-│    Singleton  →  JobQueue, QueuedJobProcessorService                    │
+│    Singleton  →  JobQueue, QueuedJobProcessorService, HeartbeatStore    │
 │    Scoped     →  IHealthMetricsService (consumed via scope in hosted)   │
 │    Transient  →  (none in this sample)                                  │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -101,7 +101,8 @@ dotnet-background-services-hostedservice/
 │   ├── Properties/
 │   │   └── launchSettings.json                  # Swagger auto-launch on F5
 │   ├── Services/
-│   │   ├── HealthMetricsService.cs              # Scoped: records heartbeat timestamps
+│   │   ├── HealthMetricsService.cs              # Scoped: delegates heartbeats to HeartbeatStore
+│   │   ├── HeartbeatStore.cs                    # Singleton: thread-safe heartbeat storage
 │   │   ├── IHealthMetricsService.cs             # Metrics service interface
 │   │   ├── QueuedJobProcessorService.cs         # Pattern 2: channel-backed processor
 │   │   ├── StartupCleanupService.cs             # Pattern 3: startup/shutdown hooks

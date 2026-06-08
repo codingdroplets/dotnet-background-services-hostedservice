@@ -1,6 +1,25 @@
-@BackgroundServicesDemo_HostAddress = http://localhost:5014
+@BackgroundServicesDemo_HostAddress = http://localhost:5289
 
-GET {{BackgroundServicesDemo_HostAddress}}/weatherforecast/
+### Enqueue a background job — returns 202 Accepted (processed asynchronously)
+POST {{BackgroundServicesDemo_HostAddress}}/api/jobs?name=DemoJob&payload=hello
+Accept: application/json
+
+###
+
+### List all completed jobs
+GET {{BackgroundServicesDemo_HostAddress}}/api/jobs
+Accept: application/json
+
+###
+
+### Get a single job's status by id (replace the GUID with one returned from the POST above)
+GET {{BackgroundServicesDemo_HostAddress}}/api/jobs/00000000-0000-0000-0000-000000000000/status
+Accept: application/json
+
+###
+
+### Heartbeats recorded by the TimedHeartbeatService
+GET {{BackgroundServicesDemo_HostAddress}}/api/heartbeats
 Accept: application/json
 
 ###

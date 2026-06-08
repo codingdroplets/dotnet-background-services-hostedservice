@@ -12,7 +12,7 @@ public sealed class TimedHeartbeatServiceTests
     public async Task ExecuteAsync_ShouldRecordHeartbeat_WhenTimerTickOccurs()
     {
         // Arrange — use a scoped per-test metrics instance.
-        var metricsService = new HealthMetricsService();
+        var metricsService = new HealthMetricsService(new HeartbeatStore());
 
         var services = new ServiceCollection();
         services.AddSingleton<IHealthMetricsService>(metricsService);
@@ -42,7 +42,7 @@ public sealed class TimedHeartbeatServiceTests
     [Fact]
     public async Task ExecuteAsync_ShouldRecordMultipleHeartbeats_OverTime()
     {
-        var metricsService = new HealthMetricsService();
+        var metricsService = new HealthMetricsService(new HeartbeatStore());
 
         var services = new ServiceCollection();
         services.AddSingleton<IHealthMetricsService>(metricsService);

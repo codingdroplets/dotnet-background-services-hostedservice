@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using BackgroundServicesDemo.Channels;
 using BackgroundServicesDemo.Models;
 
@@ -15,7 +16,8 @@ public sealed class QueuedJobProcessorService : BackgroundService
 
     // Tracks completed job statuses in-memory for the demo.
     // In production, persist to a database inside a scoped DI service.
-    private readonly List<JobStatus> _completedJobs = [];
+    // Thread-safe: written by the background loop and read concurrently by HTTP requests.
+    private readonly ConcurrentQueue<JobStatus> _completedJobs = new();
 
     public QueuedJobProcessorService(
         JobQueue queue,
@@ -25,8 +27,8 @@ public sealed class QueuedJobProcessorService : BackgroundService
         _logger = logger;
     }
 
-    /// <summary>Returns an immutable snapshot of completed job statuses.</summary>
-    public IReadOnlyList<JobStatus> CompletedJobs => _completedJobs.AsReadOnly();
+    /// <summary>Returns an ordered, point-in-time snapshot of completed job statuses.</summary>
+    public IReadOnlyList<JobStatus> CompletedJobs => _completedJobs.ToArray();
 
     /// <summary>
     /// Core loop: read items from the channel until the host signals shutdown.
@@ -64,7 +66,7 @@ public sealed class QueuedJobProcessorService : BackgroundService
                 CompletedAt = DateTimeOffset.UtcNow
             };
 
-            _completedJobs.Add(status);
+            _completedJobs.Enqueue(status);
 
             _logger.LogInformation("[Job {Id}] Completed '{Name}'", job.Id, job.Name);
         }
@@ -72,7 +74,7 @@ public sealed class QueuedJobProcessorService : BackgroundService
         {
             _logger.LogWarning("[Job {Id}] '{Name}' cancelled during shutdown.", job.Id, job.Name);
 
-            _completedJobs.Add(new JobStatus
+            _completedJobs.Enqueue(new JobStatus
             {
                 Id = job.Id,
                 Name = job.Name,
@@ -86,7 +88,7 @@ public sealed class QueuedJobProcessorService : BackgroundService
         {
             _logger.LogError(ex, "[Job {Id}] '{Name}' failed.", job.Id, job.Name);
 
-            _completedJobs.Add(new JobStatus
+            _completedJobs.Enqueue(new JobStatus
             {
                 Id = job.Id,
                 Name = job.Name,
